@@ -1,0 +1,79 @@
+目前用了四种实现方式：
+(1) named pipes (FIFOS, first in first out)
+(2) message queue
+(3) pipe
+(4) shared memory
+分别对应仓库内的四个文件夹，下面说明每种实现方式的功能和使用方法。
+
+1. fifos
+源代码： fifoclient.c fifoserver.c
+编译后，首先将fifoserver在后台运行: $ ./fifoserver &
+fifoserver用于接受fifoclient程序所传的字符串
+fifoclient程序使用方式：$ ./fifoclient <string>
+e.g. $ ./fifoclient "Hello world!"
+fifoserver程序将打印出: Received string: Hello world!
+
+2. message_queue
+使用方式1：
+  源代码： msg_queue.c sender.c receiver.c rm_queue.c
+  其中msg_queue.c中没有main函数，声明和定义了sender.c/receiver.c/rm_queue.c中需使用的函数
+  所以编译时，应将这四个函数放在一个目录下，只需编译sender.c/receiver.c/rm_queue.c即可
+  sender程序的使用方式：$ ./sender <mtype> <mtext> 
+  receiver程序的使用方式：$ ./receiver <mtype>
+  e.g. 
+  $ ./sender 5 "hello world" //程序将在屏幕上打印出:Sending a message...(qid:xxxxxx)
+  $ ./receiver 5 //程序将在屏幕上打印出:Reading a message...(qid:xxxxxx)
+                 //                  Type: 5 Text: hello world
+  $ ./rm_queue.o  //程序将在屏幕上打印出:Remove queue xxxxxx
+  注：qid由msgget函数返回
+使用方式2：
+  源代码：msgtool.c
+  使用方法：
+  sending messages:    ./msgtool s (type) "text"
+  recieving messages:  ./msgtool r (type)
+  changing the permissions (mode):
+                       ./msgtool m (mode)
+  deleting a queue:    ./msgtool d
+  
+3. pipe
+源代码：pipe.c
+使用方法：$ ./pipe <string>
+e.g. $./pipe "hello world"
+程序将打印出：
+Received string: hello world
+size = 12 bytes
+
+4. shared_mem
+使用方法1：
+  源代码：shm.c
+  该程序在一个程序内从内存的不同位置访问shared memory，打印出两次的地址、共享内存块大小和第一次访问共享内存时所存入的字符串
+    shared memory attached at address 0x7ff2e5436000
+    segment size: 25600
+    shared memory reattached at address 0x5000000
+    hello world
+使用方法2：
+  源代码：shared_mem.c
+  使用方法：
+  ./shared_mem g :generate shared memory segment and print the segment_id
+  ./shared_mem d <segment_id> : delete the shared memory segment
+  ./shared_mem w <segment_id> <string> :write the string in the shared memory segment
+  ./shared_mem r <segment_id> : read the string in the shared memory segment
+  ./shared_mem s : check the shared memory segment state  
+  
+  e.g.
+  $./shared_mem g
+  Generating segment...
+  segment id = 2457612
+  $./shared_mem w 2457612 "hello world"
+  shared_memory attached at address 0x7f71c0a89000
+  segment size = 25600
+  Writing string to the segment...
+  $./shared_mem r 2457612
+  Shared_memory attached at address 0x7f364b9d800
+  Reading the message...
+  Text: hello world
+  $./shared_mem d 2457612
+  Deleting segment 2457612 ...
+  
+  
+  
